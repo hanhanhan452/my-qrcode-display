@@ -3,15 +3,28 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 禁止缓存的三行代码 -->
+    
+    <!-- ========== 强制禁用缓存（一劳永逸）========== -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <!-- ========================================== -->
     
-    <title>图片展示 20240211</title>  <!-- 每天都可以改日期 -->
+    <title>图片展示</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; background: #f5f5f5; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        /* 图片容器 - 每张图占满一屏 */
         .image-item {
             width: 100%;
             min-height: 100vh;
@@ -20,26 +33,38 @@
             justify-content: center;
             align-items: center;
             padding: 30px 20px;
+            box-sizing: border-box;
         }
+        
+        /* 图片样式 */
         .image-item img {
             max-width: 100%;
             max-height: 80vh;
             width: auto;
             height: auto;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: block;
         }
+        
+        /* 图片描述文字 */
         .image-caption {
-            margin-top: 15px;
+            margin-top: 20px;
             color: #666;
-            font-size: 14px;
+            font-size: 15px;
+            text-align: center;
+            padding: 0 15px;
         }
+        
+        /* 分隔线 */
         .divider {
             width: 80%;
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
             margin: 0 auto;
         }
+        
+        /* 加载动画 */
         #loading {
             position: fixed;
             top: 0;
@@ -52,71 +77,150 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            transition: opacity 0.5s;
         }
-        .hidden { display: none !important; }
+        
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e0e0e0;
-            border-top: 4px solid #007bff;
+            width: 45px;
+            height: 45px;
+            border: 5px solid #e0e0e0;
+            border-top: 5px solid #007bff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loading-text {
+            color: #666;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 底部提示 */
+        .hint {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            padding: 20px;
+            background: #fafafa;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+    <!-- 加载动画 -->
     <div id="loading">
         <div class="spinner"></div>
-        <div>图片加载中...</div>
+        <div class="loading-text">图片加载中...</div>
     </div>
     
-    <!-- 第一张图片 - 带时间戳防止缓存 -->
+    <!-- ========== 第一张图片 ========== -->
     <div class="image-item">
-        <img src="./my-picture-1.png?v=20240211.1" 
+        <img src="./my-picture-1.png" 
              alt="图片1"
-             onload="checkLoad()"
-             onerror="checkLoad()">
+             onload="checkImageLoaded()"
+             onerror="handleImageError(this, '第一张图片加载失败')">
         <div class="image-caption">第一张图片</div>
     </div>
     
+    <!-- 分隔线 -->
     <div class="divider"></div>
     
-    <!-- 第二张图片 - 带时间戳防止缓存 -->
+    <!-- ========== 第二张图片 ========== -->
     <div class="image-item">
-        <img src="./my-picture-2.png?v=20240211.1" 
+        <img src="./my-picture-2.png" 
              alt="图片2"
-             onload="checkLoad()"
-             onerror="checkLoad()">
+             onload="checkImageLoaded()"
+             onerror="handleImageError(this, '第二张图片加载失败')">
         <div class="image-caption">第二张图片</div>
     </div>
+    
+    <!-- 底部提示 -->
+    <div class="hint">↑ 上下滑动浏览 ↓</div>
 
     <script>
+        // ========== 图片加载控制 ==========
         let loadedCount = 0;
         const TOTAL_IMAGES = 2;
         
-        function checkLoad() {
+        // 图片加载成功/失败都计数
+        function checkImageLoaded() {
             loadedCount++;
             if (loadedCount >= TOTAL_IMAGES) {
-                document.getElementById('loading').classList.add('hidden');
+                hideLoading();
             }
         }
         
-        // 2秒超时强制隐藏
-        setTimeout(() => {
-            document.getElementById('loading').classList.add('hidden');
-        }, 2000);
-        
-        // 立即检查图片是否已缓存
-        window.onload = function() {
-            const imgs = document.querySelectorAll('img');
-            let completeCount = 0;
-            imgs.forEach(img => { if (img.complete) completeCount++; });
-            if (completeCount >= TOTAL_IMAGES) {
-                document.getElementById('loading').classList.add('hidden');
+        // 图片加载失败处理
+        function handleImageError(img, message) {
+            console.error(message);
+            img.style.border = "2px dashed #ff6b6b";
+            img.style.padding = "20px";
+            
+            // 在图片下方显示错误提示
+            const caption = img.parentNode.querySelector('.image-caption');
+            if (caption) {
+                caption.innerHTML = `<span style="color:#ff6b6b;">❌ ${message}</span>`;
             }
-        };
+            
+            checkImageLoaded(); // 失败也算加载完成
+        }
+        
+        // 隐藏加载动画
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.opacity = '0';
+                setTimeout(() => {
+                    loading.classList.add('hidden');
+                }, 500);
+            }
+        }
+        
+        // ========== 强制禁用缓存机制（双重保险）==========
+        // 1. 给图片URL加上时间戳，强制重新加载
+        window.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                const originalSrc = img.getAttribute('src');
+                if (originalSrc && !originalSrc.includes('?')) {
+                    img.src = originalSrc + '?t=' + new Date().getTime();
+                }
+            });
+        });
+        
+        // 2. 3秒超时强制隐藏加载动画（防卡死）
+        setTimeout(() => {
+            hideLoading();
+        }, 3000);
+        
+        // 3. 检查图片是否已缓存
+        window.addEventListener('load', function() {
+            const images = document.querySelectorAll('img');
+            let completeCount = 0;
+            images.forEach(img => {
+                if (img.complete) completeCount++;
+            });
+            if (completeCount >= TOTAL_IMAGES) {
+                hideLoading();
+            }
+        });
+        
+        // 4. 禁止页面被缓存
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+        
+        console.log('页面已加载，缓存已禁用');
     </script>
 </body>
 </html>
