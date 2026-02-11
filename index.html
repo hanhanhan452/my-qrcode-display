@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!-- 这一行非常重要！让手机正常显示 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>欢迎查看</title>
+    <style>
+        /* 重置所有元素的默认边距 */
+        * {
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+        }
+        
+        /* 设置html和body为全屏 */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 禁止滚动条 */
+            background-color: #f8f9fa; /* 浅灰色背景 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        /* 图片容器：居中显示 */
+        .image-container {
+            width: 100vw;  /* 视窗宽度的100% */
+            height: 100vh; /* 视窗高度的100% */
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center;     /* 垂直居中 */
+            padding: 15px; /* 四周留白 */
+            box-sizing: border-box; /* 让padding不影响尺寸 */
+        }
+        
+        /* 图片样式 */
+        .my-image {
+            max-width: 100%;   /* 最大宽度不超过容器 */
+            max-height: 100%;  /* 最大高度不超过容器 */
+            width: auto;       /* 宽度自适应 */
+            height: auto;      /* 高度自适应 */
+            border-radius: 8px; /* 圆角 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 阴影 */
+            opacity: 0; /* 初始透明，加载完成后淡入 */
+            transition: opacity 0.5s ease-in-out; /* 淡入动画 */
+        }
+        
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #666;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 错误提示 */
+        .error {
+            text-align: center;
+            color: #dc3545;
+            padding: 20px;
+        }
+        
+        /* 重试按钮 */
+        .retry-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .image-container {
+                padding: 10px;
+            }
+            .my-image {
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>图片加载中...</div>
+    </div>
+    
+    <!-- 图片容器 -->
+    <div class="image-container">
+        <img class="my-image" 
+             id="mainImage"
+             src="./my-picture.png" 
+             alt="我的展示图片"
+             onload="imageLoaded()"
+             onerror="imageError()">
+    </div>
+    
+    <!-- 错误提示（默认隐藏） -->
+    <div class="error" id="errorBox" style="display: none;">
+        <div>图片加载失败</div>
+        <button class="retry-btn" onclick="retryLoading()">点击重试</button>
+    </div>
+
+    <script>
+        // 图片加载成功
+        function imageLoaded() {
+            var img = document.getElementById('mainImage');
+            var loading = document.getElementById('loading');
+            var errorBox = document.getElementById('errorBox');
+            
+            // 显示图片（淡入效果）
+            img.style.opacity = '1';
+            
+            // 隐藏加载动画
+            loading.style.display = 'none';
+            
+            // 确保错误提示隐藏
+            errorBox.style.display = 'none';
+            
+            console.log('图片加载成功');
+        }
+        
+        // 图片加载失败
+        function imageError() {
+            var loading = document.getElementById('loading');
+            var errorBox = document.getElementById('errorBox');
+            
+            // 隐藏加载动画
+            loading.style.display = 'none';
+            
+            // 显示错误提示
+            errorBox.style.display = 'block';
+            
+            console.error('图片加载失败');
+        }
+        
+        // 重试加载
+        function retryLoading() {
+            var img = document.getElementById('mainImage');
+            var loading = document.getElementById('loading');
+            var errorBox = document.getElementById('errorBox');
+            
+            // 显示加载动画
+            loading.style.display = 'block';
+            
+            // 隐藏错误提示
+            errorBox.style.display = 'none';
+            
+            // 重置图片透明度
+            img.style.opacity = '0';
+            
+            // 重新加载图片（添加时间戳防止缓存）
+            var src = img.src;
+            img.src = '';
+            img.src = src.split('?')[0] + '?t=' + new Date().getTime();
+        }
+        
+        // 10秒超时检查
+        setTimeout(function() {
+            var img = document.getElementById('mainImage');
+            var loading = document.getElementById('loading');
+            
+            if (img.naturalWidth === 0 && loading.style.display !== 'none') {
+                imageError();
+            }
+        }, 10000);
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面已加载，开始加载图片');
+        });
+    </script>
+</body>
+</html>
